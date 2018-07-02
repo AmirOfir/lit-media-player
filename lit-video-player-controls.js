@@ -51,53 +51,47 @@ class LitVideoPlayerControls extends LitElement {
 
   static get properties() {
     return {
-      currTime: String,
-      videoLength: Number,
-      isPlaying: Boolean,
-      volume: Number,
+      _currTime: String,
+      _videoLength: Number,
+      _isPlaying: Boolean,
+      _volume: Number,
     };
   }
 
+  set currentTime(t) {
+    this._currTime = t;
+    this.requestRender();
+  }
+  set videoLength(d) {
+    this._videoLength = d;
+  }
+  set isPlaying(b) {
+    this._isPlaying = b;
+    this.requestRender();
+  }
+  set volume(d) {
+    this._volume = d;
+    this.requestRender();
+  }
+
+
   get percentage() {
-    const percentage = Math.floor((100 / mediaPlayer.duration) * mediaPlayer.currentTime);
+    const percentage = Math.floor((100 / this._videoLength) * this._currTime);
     return isNaN(percentage) ? 0: percentage;
   }
 
   dispatch(eventName) {
-    this.dispatchEvent(
-      new CustomEvent(eventName, { bubbles: true, composed: true, detail: null}));
-    });
+    const obj = { bubbles: true, composed: true, detail: null};
+    const ev = new CustomEvent(eventName, obj);
+    this.dispatchEvent(ev);
   }
+
   getElementById(id) {
     return this.shadowRoot.getElementById(id);
   }
 
-  _didRender() {
-    // this.mediaPlayer.controls = false;
-    // const progressBar = this.getElementById('progress-bar');
-    // progressBar.value = 0;
-    // this.mediaPlayer.addEventListener('timeupdate', () => this.updateProgressBar(), false);
-    // this.mediaPlayer.addEventListener('play', () => {
-    //   const btn = this.getElementById('play-pause-button');
-    //   this.changeButtonType(btn, 'pause');
-    // }, false);
-    // this.mediaPlayer.addEventListener('pause', () => {
-    //   const btn = this.getElementById('play-pause-button');
-    //   this.changeButtonType(btn, 'play');
-    // }, false);
-    // this.mediaPlayer.addEventListener('volumechange', (e) => {
-    //   const btn = this.getElementById('mute-button');
-    //
-    //   if (this.mediaPlayer.muted) this.changeButtonType(btn, 'unmute');
-    //   else this.changeButtonType(btn, 'mute');
-    // }, false);
-    // this.mediaPlayer.addEventListener('ended', () => {
-    //   this.dispatchEvent(
-    //     new CustomEvent('ended', { bubbles: true, composed: true, detail: null}));
-    // });
-  }
   togglePlayPause() {
-    if (this.isPlaying)
+    if (this._isPlaying)
       this.dispatch("pause");
     else
       this.dispatch("play");
@@ -118,8 +112,8 @@ class LitVideoPlayerControls extends LitElement {
     this.dispatch('replay');
   }
 
-  _render({isPlaying, currTime, videoLength, volume}) {
-    const mute = volume == 0;
+  _render({_isPlaying, _currTime, _videoLength, _volume}) {
+    const mute = _volume == 0;
     const { percentage } = this;
     return html`
       <style>
@@ -157,12 +151,12 @@ class LitVideoPlayerControls extends LitElement {
         <button
           title="pause"
           on-click="${e => tihs.togglePlayPause(e)}"
-          hidden?="${!isPlaying}"
+          hidden?="${!_isPlaying}"
         ><iron-icon icon="av:pause"></iron-icon>
         </button>
         <button id="play-pause-button"
           title="play"
-          hidden?="${!!isPlaying}"
+          hidden?="${!!_isPlaying}"
           on-click="${e => this.togglePlayPause(e)}">
           <iron-icon icon="av:play-arrow"></iron-icon>
         </button>
@@ -174,15 +168,11 @@ class LitVideoPlayerControls extends LitElement {
           <iron-icon icon="av:stop"></iron-icon>
         </button>
         <button
-          id="volume-inc-button"
-          class="volume-plus"
           title="increase volume"
           on-click="${e => this.changeVolume("+")}">
           <iron-icon icon="av:volume-up"></iron-icon>
         </button>
         <button
-          id="volume-dec-button"
-          class="volume-minus"
           title="decrease volume"
           onclick="${e => this.changeVolume("-")}">
           <iron-icon icon="av:volume-down"></iron-icon>

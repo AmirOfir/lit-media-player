@@ -29,14 +29,21 @@ class LitVideoPlayer extends LitElement {
   }
 
   get controls() {
-    return this.getElementById('lit-video-player-controls');
+    return this.getElementById('controls');
   }
 
   _didRender() {
     this.mediaPlayer.controls = false;
-    this.controls.currTime = this.mediaPlayer.currentTime;
-    this.controls.videoLength = this.mediaPlayer.duration;
+    const { duration, currentTime } = this.mediaPlayer;
+    this.controls.currentTime = currentTime;
+    this.controls.videoLength = isNaN(duration) ? 0 : duration;
 
+    this.mediaPlayer.addEventListener('durationchange', () => {
+        this.controls.videoLength = this.mediaPlayer.duration;
+    }, false);
+    this.mediaPlayer.addEventListener('loadend', () => {
+        this.controls.videoLength = this.mediaPlayer.duration;
+    }, false);
     this.mediaPlayer.addEventListener('timeupdate', () => this.updateProgressBar(), false);
     this.mediaPlayer.addEventListener('play', () => {
       this.controls.isPlaying = true;
@@ -54,7 +61,7 @@ class LitVideoPlayer extends LitElement {
   }
 
   updateProgressBar() {
-    this.controls.currTime = this.mediaPlayer.currentTime;
+    this.controls.currentTime = this.mediaPlayer.currentTime;
   }
 
   togglePlayPause() {
@@ -87,7 +94,7 @@ class LitVideoPlayer extends LitElement {
   resetMedia() {
     this.mediaPlayer.currentTime = 0;
     this.mediaPlayer.play();
-    this.controls.currTime = this.mediaPlayer.currentTime;
+    this.controls.currentTime = this.mediaPlayer.currentTime;
   }
 
   _render({src}) {
@@ -108,10 +115,11 @@ class LitVideoPlayer extends LitElement {
          }
       </style>
       <div>
-        <video src$="${src}" id="video">
-        </video>
+        <video id="video"
+          src$="${src}"
+        ></video>
       </div>
-      <lit-video-player-controls
+      <lit-video-player-controls id="controls"
         on-pause="${e => this.togglePlayPause()}"
         on-play="${e => this.togglePlayPause()}"
         on-stop="${e => this.stopPlayer()}"
