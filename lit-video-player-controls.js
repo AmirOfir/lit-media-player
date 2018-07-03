@@ -1,7 +1,24 @@
 
 import { LitElement, html } from '@polymer/lit-element';
+import { repeat } from 'lit-html/lib/repeat';
 import '@polymer/iron-icons/iron-icons.js';
 import '@polymer/iron-icons/av-icons.js';
+
+const speedPicker = (context, speedOptions, currentSpeed) => {
+  const method = context.changeSpeed.bind(context);
+  return html`
+    ${repeat(speedOptions, (item,index) => html`
+      <div
+        selected?="${currentSpeed == item}"
+        on-click="${e=> method(item)}">
+        <a
+          tabindex="-1"
+          href="javascript:;"
+          >${item}</a>
+      </div>
+    `)}
+    `;
+};
 /*
 // @LitVideoPlayerControls
 */
@@ -49,12 +66,24 @@ class LitVideoPlayerControls extends LitElement {
   * @event replay
   */
 
+  /**
+  * when new speed is selected
+  *
+  * @event replay
+  */
+
   static get properties() {
     return {
       _currTime: String,
       _videoLength: Number,
       _isPlaying: Boolean,
       _volume: Number,
+      currentSpeed: {
+        type: Number,
+        reflectToAttribute: true
+      },
+      _speedSelectorOpen: Boolean,
+      speedOptions: Array,
     };
   }
 
@@ -74,14 +103,13 @@ class LitVideoPlayerControls extends LitElement {
     this.requestRender();
   }
 
-
   get percentage() {
     const percentage = Math.floor((100 / this._videoLength) * this._currTime);
     return isNaN(percentage) ? 0: percentage;
   }
 
-  dispatch(eventName) {
-    const obj = { bubbles: true, composed: true, detail: null};
+  dispatch(eventName, detail = null) {
+    const obj = { bubbles: true, composed: true, detail};
     const ev = new CustomEvent(eventName, obj);
     this.dispatchEvent(ev);
   }
@@ -111,27 +139,61 @@ class LitVideoPlayerControls extends LitElement {
   replayMedia() {
     this.dispatch('replay');
   }
+  toggleSpeedPicker() {
+    this._speedSelectorOpen = !this._speedSelectorOpen;
+  }
+  changeSpeed(newSpeed) {
+    this.dispatch('speed', { newSpeed });
+    this._speedSelectorOpen = false;
+  }
 
-  _render({_isPlaying, _currTime, _videoLength, _volume}) {
+  _render({_isPlaying, _currTime, _videoLength, _volume, _speedSelectorOpen, speedOptions, currentSpeed}) {
     const mute = _volume == 0;
     const { percentage } = this;
+
+    const speedPickerElement = speedPicker(this, speedOptions || [0.75, 1, 1.25, 1.5, 2], currentSpeed || 1);
     return html`
       <style>
         :host {
           display: block;
           position: relative;
           margin-bottom: 18px;
+          --iron-icon-width: 16px;
+          --iron-icon-height:16px;
         }
-         progress {
+        progress {
            flex-grow: 2;
            height: 30px;
          }
-         #media-controls {
+        #media-controls {
            display: flex
          }
-         [hidden] {
-           display:none !important;
-         }
+        [hidden] {
+         display:none !important;
+        }
+        #speed-selector {
+          position: absolute;
+          right: 3px;
+          bottom: calc(100% + 2px);
+          background: rgba(0,0,0,0.7);
+          padding: 10px 3px;
+        }
+        #speed-selector div {
+          padding: 0 7px;
+          background: rgba(255,255,255,0);
+          transition: 0.2s ease-out;
+          cursor: pointer;
+        }
+        #speed-selector div:hover {
+          background: rgba(255,255,255,0.4);
+        }
+        #speed-selector a {
+          color: rgba(255,255,255,0.8);
+          text-decoration: none;
+        }
+        #speed-selector div.selected a {
+          color: rgba(0,255,0,0.8);
+        }
       </style>
       <div id="media-controls">
         <progress
@@ -152,9 +214,9 @@ class LitVideoPlayerControls extends LitElement {
           title="pause"
           on-click="${e => tihs.togglePlayPause(e)}"
           hidden?="${!_isPlaying}"
-        ><iron-icon icon="av:pause"></iron-icon>
+          ><iron-icon icon="av:pause"></iron-icon>
         </button>
-        <button id="play-pause-button"
+        <button
           title="play"
           hidden?="${!!_isPlaying}"
           on-click="${e => this.togglePlayPause(e)}">
@@ -189,6 +251,15 @@ class LitVideoPlayerControls extends LitElement {
           on-click="${e => this.toggleMute()}">
           <iron-icon icon="av:volume-mute"></iron-icon>
         </button>
+        <button
+          title="speed"
+          on-click="${e => this.toggleSpeedPicker()}">
+          <iron-icon icon="icons:trending-up" />
+        </button>
+
+        <div id="speed-selector" hidden?="${!_speedSelectorOpen}">
+          ${speedPickerElement}
+        </div>
       </div>
     `;
   }
