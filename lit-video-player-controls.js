@@ -69,7 +69,7 @@ class LitVideoPlayerControls extends LitElement {
   /**
   * when new speed is selected
   *
-  * @event replay
+  * @event speed-change
   */
 
   static get properties() {
@@ -78,11 +78,8 @@ class LitVideoPlayerControls extends LitElement {
       _videoLength: Number,
       _isPlaying: Boolean,
       _volume: Number,
-      currentSpeed: {
-        type: Number,
-        reflectToAttribute: true
-      },
       _speedSelectorOpen: Boolean,
+      _currentSpeed: Number,
       speedOptions: Array,
     };
   }
@@ -102,7 +99,9 @@ class LitVideoPlayerControls extends LitElement {
     this._volume = d;
     this.requestRender();
   }
-
+  set currentSpeed(d) {
+    this._currentSpeed = d;
+  }
   get percentage() {
     const percentage = Math.floor((100 / this._videoLength) * this._currTime);
     return isNaN(percentage) ? 0: percentage;
@@ -143,15 +142,15 @@ class LitVideoPlayerControls extends LitElement {
     this._speedSelectorOpen = !this._speedSelectorOpen;
   }
   changeSpeed(newSpeed) {
-    this.dispatch('speed', { newSpeed });
+    this.dispatch('speed-change', { newSpeed });
     this._speedSelectorOpen = false;
   }
 
-  _render({_isPlaying, _currTime, _videoLength, _volume, _speedSelectorOpen, speedOptions, currentSpeed}) {
+  _render({_isPlaying, _currTime, _videoLength, _volume, _speedSelectorOpen, speedOptions, _currentSpeed}) {
     const mute = _volume == 0;
     const { percentage } = this;
 
-    const speedPickerElement = speedPicker(this, speedOptions || [0.75, 1, 1.25, 1.5, 2], currentSpeed || 1);
+    const speedPickerElement = speedPicker(this, speedOptions || [0.75, 1, 1.25, 1.5, 2], _currentSpeed || 1);
     return html`
       <style>
         :host {
@@ -183,16 +182,20 @@ class LitVideoPlayerControls extends LitElement {
           background: rgba(255,255,255,0);
           transition: 0.2s ease-out;
           cursor: pointer;
+          min-width: 25px;
+        }
+        #speed-selector div[selected] {
+          background: rgba(0,255,255,0.2);
         }
         #speed-selector div:hover {
           background: rgba(255,255,255,0.4);
         }
+        #speed-selector div[selected]:hover {
+          background: rgba(0,255,255,0.6);
+        }
         #speed-selector a {
           color: rgba(255,255,255,0.8);
           text-decoration: none;
-        }
-        #speed-selector div.selected a {
-          color: rgba(0,255,0,0.8);
         }
       </style>
       <div id="media-controls">

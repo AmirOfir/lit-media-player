@@ -17,7 +17,15 @@ class LitVideoPlayer extends LitElement {
   static get properties() {
     return {
       src: String,
+      currentSpeed: Number,
+      speedOptions: Array,
     };
+  }
+
+  constructor() {
+    super();
+    this.currentSpeed = 1;
+    this.speedOptions = [1,2,4,6];
   }
 
   getElementById(id) {
@@ -97,7 +105,14 @@ class LitVideoPlayer extends LitElement {
     this.controls.currentTime = this.mediaPlayer.currentTime;
   }
 
-  _render({src}) {
+  changeSpeed(detail) {
+    const newSpeed = isNaN(detail) ? detail.newSpeed : detail;
+    this.currentSpeed = newSpeed;
+    this.mediaPlayer.playbackRate = newSpeed;
+    this.controls.currentSpeed = newSpeed;
+  }
+
+  _render({src, speedOptions}) {
     return html`
       <style>
         :host {
@@ -127,6 +142,8 @@ class LitVideoPlayer extends LitElement {
         on-mute="${e => this.toggleMute()}"
         on-volume-up="${e => this.changeVolume('+')}"
         on-volume-down="${e => this.changeVolume('-')}"
+        speedOptions="${speedOptions}"
+        on-speed-change="${e => this.changeSpeed(e.detail)}"
       ></lit-video-player-controls>
     `;
   }
